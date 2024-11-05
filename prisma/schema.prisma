@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id                String   @id @default(cuid())
+  name              String
+  registrationNumber String
+  sstNumber         String
+  address           String
+  email             String
+  phone             String
+  bankName          String
+  accountNumber     String
+  swiftCode         String?
+  digitalSignature  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Customer {
+  id                String    @id @default(cuid())
+  companyName       String
+  registrationNumber String
+  contactPerson     String
+  address           String
+  email             String
+  phone             String
+  category          String    // 'regular' or 'one-time'
+  creditTerms       Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  invoices          Invoice[]
+  payments          Payment[]
+}
+
+model Product {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  name          String
+  description   String
+  unitPrice     Decimal   @db.Decimal(10, 2)
+  sstRate       Decimal   @db.Decimal(5, 2)
+  category      String
+  unit          String
+  stock         Int?
+  minimumStock  Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  invoiceItems  InvoiceItem[]
+}
+
+model Invoice {
+  id            String    @id @default(cuid())
+  invoiceNumber String    @unique
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  issueDate     DateTime
+  dueDate       DateTime
+  subtotal      Decimal   @db.Decimal(10, 2)
+  totalSST      Decimal   @db.Decimal(10, 2)
+  totalDiscount Decimal   @db.Decimal(10, 2)
+  total         Decimal   @db.Decimal(10, 2)
+  status        String    // 'draft', 'issued', 'paid', 'overdue', 'cancelled'
+  notes         String?
+  paymentTerms  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  items         InvoiceItem[]
+  payments      Payment[]
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  description String
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  sstRate     Decimal  @db.Decimal(5, 2)
+  discount    Decimal? @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  date        DateTime
+  amount      Decimal  @db.Decimal(10, 2)
+  method      String
+  reference   String
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  invoiceId   String?
+  invoice     Invoice? @relation(fields: [invoiceId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
