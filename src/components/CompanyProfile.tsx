@@ -6,22 +6,32 @@ import type { Company } from '@prisma/client';
 export default function CompanyProfile() {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isNewCompany, setIsNewCompany] = useState(false);
 
   useEffect(() => {
     async function loadCompany() {
       try {
         const data = await getCompany();
-        setCompany(data || {
-          name: '',
-          registrationNumber: '',
-          sstNumber: '',
-          address: '',
-          email: '',
-          phone: '',
-          bankName: '',
-          accountNumber: '',
-          swiftCode: '',
-        });
+        if (!data) {
+          setIsNewCompany(true);
+          setCompany({
+            name: '',
+            id: '',
+            registrationNumber: '',
+            sstNumber: '',
+            address: '',
+            email: '',
+            phone: '',
+            bankName: '',
+            accountNumber: '',
+            swiftCode: '',
+            digitalSignature: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        } else {
+          setCompany(data);
+        }
       } catch (error) {
         console.error('Error loading company:', error);
       } finally {
@@ -49,10 +59,11 @@ export default function CompanyProfile() {
         digitalSignature: company.digitalSignature,
       });
       setCompany(updated);
-      alert('Company profile updated successfully');
+      setIsNewCompany(false);
+      alert(isNewCompany ? 'Company profile created successfully' : 'Company profile updated successfully');
     } catch (error) {
       console.error('Error updating company:', error);
-      alert('Failed to update company profile');
+      alert(isNewCompany ? 'Failed to create company profile' : 'Failed to update company profile');
     }
   };
 
@@ -68,14 +79,21 @@ export default function CompanyProfile() {
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Company Profile</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Company Profile</h1>
+            {isNewCompany && (
+              <p className="text-sm text-amber-600 mt-1">
+                Please set up your company profile to continue
+              </p>
+            )}
+          </div>
           <button
             type="submit"
             form="company-form"
             className="btn-primary"
           >
             <Save className="w-4 h-4 mr-2" />
-            Save Changes
+            {isNewCompany ? 'Create Profile' : 'Save Changes'}
           </button>
         </div>
 
